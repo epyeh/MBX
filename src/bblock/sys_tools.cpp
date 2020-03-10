@@ -163,12 +163,9 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
         } else if (mon[i] == "co2") {
             sites.push_back(3);
             nat.push_back(3);
-        } else if (mon[i] == "ar") {
-            sites.push_back(1);
-            nat.push_back(1);
-        } else if (mon[i] == "dummy") {
-            sites.push_back(1);
-            nat.push_back(1);
+        } else if (mon[i] == "h4_dummy") {
+            sites.push_back(4);
+            nat.push_back(4);
 
             // Halides and alkali metal ions
         } else if (mon[i] == "f" || mon[i] == "cl" ||                                      // Halides
@@ -359,7 +356,7 @@ void GetCloseTrimerImage(std::vector<double> box, size_t nat1, size_t nat2, size
 
 bool ComparePair(std::pair<size_t, double> a, std::pair<size_t, double> b) { return a.first < b.first; }
 
-//void GetCloseNeighbors(kdtutils::PointCloud<double> ptc, std::vector<double> reference, double cutoff,
+// void GetCloseNeighbors(kdtutils::PointCloud<double> ptc, std::vector<double> reference, double cutoff,
 //                       std::vector<double> &xyz_out, std::vector<size_t> &indexes) {
 //    // Build the tree
 //    typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
@@ -396,7 +393,8 @@ bool ComparePair(std::pair<size_t, double> a, std::pair<size_t, double> b) { ret
 //    }
 //}
 
-//void GetCloseNeighbors(size_t nmax, std::vector<double> point, std::vector<double> xyz_orig, std::vector<size_t> fi_at,
+// void GetCloseNeighbors(size_t nmax, std::vector<double> point, std::vector<double> xyz_orig, std::vector<size_t>
+// fi_at,
 //                       bool use_pbc, std::vector<double> box, double cutoff, std::vector<size_t> &dimers,
 //                       std::vector<size_t> &trimers) {
 //    size_t npoints = fi_at.size();
@@ -598,17 +596,29 @@ void GetExcluded(std::string mon, excluded_set_type &exc12, excluded_set_type &e
         exc13.insert(std::make_pair(1, 2));
     }
 
-        if (mon == "nh3") {
-            // 12 distances
-            exc12.insert(std::make_pair(0, 1));
-            exc12.insert(std::make_pair(0, 3));
-            exc12.insert(std::make_pair(0, 2));
-            // 13 distances
-            exc13.insert(std::make_pair(1, 2));
-            exc13.insert(std::make_pair(1, 3));
-            exc13.insert(std::make_pair(2, 3));
-            // 14 distances
-        }
+    if (mon == "nh3") {
+        // 12 distances
+        exc12.insert(std::make_pair(0, 1));
+        exc12.insert(std::make_pair(0, 3));
+        exc12.insert(std::make_pair(0, 2));
+        // 13 distances
+        exc13.insert(std::make_pair(1, 2));
+        exc13.insert(std::make_pair(1, 3));
+        exc13.insert(std::make_pair(2, 3));
+        // 14 distances
+    }
+
+    if (mon == "h4_dummy") {
+        // 12 distances
+        exc12.insert(std::make_pair(0, 1));
+        exc12.insert(std::make_pair(0, 2));
+        exc12.insert(std::make_pair(0, 3));
+        // 13 distances
+        exc13.insert(std::make_pair(1, 2));
+        exc13.insert(std::make_pair(1, 3));
+        exc13.insert(std::make_pair(2, 3));
+        // 14 distances
+    }
     // =====>> END SECTION EXCLUDED <<=====
 }
 
@@ -747,23 +757,21 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
             charges[fst_ind + nv * nsites + 1] = -0.3530135 * CHARGECON;
             charges[fst_ind + nv * nsites + 2] = -0.3530135 * CHARGECON;
         }
-    } else if (mon_id == "dummy") {
+    } else if (mon_id == "h4_dummy") {
         for (size_t nv = 0; nv < n_mon; nv++) {
-            charges[fst_ind + nv] = 0.0;
-        }
-    } else if (mon_id == "ar") {
-        for (size_t nv = 0; nv < n_mon; nv++) {
-            charges[fst_ind + nv] = 0.0;
+            charges[fst_ind + nv * nsites + 0] = 0.00000;
+            charges[fst_ind + nv * nsites + 1] = 0.00000;
+            charges[fst_ind + nv * nsites + 2] = 0.00000;
+            charges[fst_ind + nv * nsites + 3] = 0.00000;
         }
 
-
-        } else if (mon_id == "nh3") {
-            for (size_t nv = 0; nv < n_mon; nv++) {
-                charges[fst_ind + nv*nsites + 0] = -0.884096 * CHARGECON;
-                charges[fst_ind + nv*nsites + 1] = 0.29469866666666666 * CHARGECON;
-                charges[fst_ind + nv*nsites + 2] = 0.29469866666666666 * CHARGECON;
-                charges[fst_ind + nv*nsites + 3] = 0.29469866666666666 * CHARGECON;
-            }
+    } else if (mon_id == "nh3") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            charges[fst_ind + nv * nsites + 0] = -0.884096 * CHARGECON;
+            charges[fst_ind + nv * nsites + 1] = 0.29469866666666666 * CHARGECON;
+            charges[fst_ind + nv * nsites + 2] = 0.29469866666666666 * CHARGECON;
+            charges[fst_ind + nv * nsites + 3] = 0.29469866666666666 * CHARGECON;
+        }
         // END SECTION CHARGES
 
         // Note, for now, assuming only water has site dependant charges
@@ -872,22 +880,21 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
             polfac[fst_ind + nv * nsites + 1] = 0.769790;
             polfac[fst_ind + nv * nsites + 2] = 0.769790;
         }
-    } else if (mon_id == "dummy") {
+    } else if (mon_id == "h4_dummy") {
         for (size_t nv = 0; nv < n_mon; nv++) {
-            polfac[fst_ind + nv] = 0.0;
-        }
-    } else if (mon_id == "ar") {
-        for (size_t nv = 0; nv < n_mon; nv++) {
-            polfac[fst_ind + nv] = 1.645;
+            polfac[fst_ind + nv * nsites + 0] = 0.00000;
+            polfac[fst_ind + nv * nsites + 1] = 0.00000;
+            polfac[fst_ind + nv * nsites + 2] = 0.00000;
+            polfac[fst_ind + nv * nsites + 3] = 0.00000;
         }
 
-        } else if (mon_id == "nh3") {
-            for (size_t nv = 0; nv < n_mon; nv++) {
-                polfac[fst_ind + nv*nsites + 0] = 0.9550488255698475;
-                polfac[fst_ind + nv*nsites + 1] = 0.3640594262763482 ;
-                polfac[fst_ind + nv*nsites + 2] = 0.3640594262763482 ;
-                polfac[fst_ind + nv*nsites + 3] = 0.3640594262763482 ;
-            }
+    } else if (mon_id == "nh3") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            polfac[fst_ind + nv * nsites + 0] = 0.9550488255698475;
+            polfac[fst_ind + nv * nsites + 1] = 0.3640594262763482;
+            polfac[fst_ind + nv * nsites + 2] = 0.3640594262763482;
+            polfac[fst_ind + nv * nsites + 3] = 0.3640594262763482;
+        }
         // =====>> END SECTION POLFACS <<=====
 
     } else if (mon_id == "h2o") {
@@ -956,22 +963,21 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
             pol[fst_ind + nv * nsites + 1] = 0.769790;
             pol[fst_ind + nv * nsites + 2] = 0.769790;
         }
-    } else if (mon_id == "dummy") {
+    } else if (mon_id == "h4_dummy") {
         for (size_t nv = 0; nv < n_mon; nv++) {
-            pol[fst_ind + nv] = 0.0;
-        }
-    } else if (mon_id == "ar") {
-        for (size_t nv = 0; nv < n_mon; nv++) {
-            pol[fst_ind + nv] = 1.645;
+            pol[fst_ind + nv * nsites + 0] = 0.00000;
+            pol[fst_ind + nv * nsites + 1] = 0.00000;
+            pol[fst_ind + nv * nsites + 2] = 0.00000;
+            pol[fst_ind + nv * nsites + 3] = 0.00000;
         }
 
-        } else if (mon_id == "nh3") {
-            for (size_t nv = 0; nv < n_mon; nv++) {
-                pol[fst_ind + nv*nsites + 0] = 0.9550488255698475;
-                pol[fst_ind + nv*nsites + 1] = 0.3640594262763482 ;
-                pol[fst_ind + nv*nsites + 2] = 0.3640594262763482 ;
-                pol[fst_ind + nv*nsites + 3] = 0.3640594262763482 ;
-            }
+    } else if (mon_id == "nh3") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            pol[fst_ind + nv * nsites + 0] = 0.9550488255698475;
+            pol[fst_ind + nv * nsites + 1] = 0.3640594262763482;
+            pol[fst_ind + nv * nsites + 2] = 0.3640594262763482;
+            pol[fst_ind + nv * nsites + 3] = 0.3640594262763482;
+        }
         // =====>> END SECTION POLS <<=====
 
     } else if (mon_id == "h2o") {
@@ -1004,38 +1010,38 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
     } else if (mon_id == "cl") {
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 57.88297168036554772821;
     } else if (mon_id == "br") {
-    // FIXME This value will be set from C6 Br-O and Br-H. Qchem does not allow
-    // C6 calculations for only pseudopotential atoms, i.e. 2 bromide, iodide...)
-    // It will be calculated as:
-    // (C6(Br--O)/C6_lr(O) + C6(Br--H)/C6_lr(H)) / 2 
+        // FIXME This value will be set from C6 Br-O and Br-H. Qchem does not allow
+        // C6 calculations for only pseudopotential atoms, i.e. 2 bromide, iodide...)
+        // It will be calculated as:
+        // (C6(Br--O)/C6_lr(O) + C6(Br--H)/C6_lr(H)) / 2
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 74.56169774397084024344;
     } else if (mon_id == "i") {
-    // FIXME This value will be set from C6 I-O and I-H. Qchem does not allow
-    // C6 calculations for only pseudopotential atoms, i.e. 2 bromide, iodide...)
-    // It will be calculated as:
-    // (C6(I--O)/C6_lr(O) + C6(I--H)/C6_lr(H)) / 2 
+        // FIXME This value will be set from C6 I-O and I-H. Qchem does not allow
+        // C6 calculations for only pseudopotential atoms, i.e. 2 bromide, iodide...)
+        // It will be calculated as:
+        // (C6(I--O)/C6_lr(O) + C6(I--H)/C6_lr(H)) / 2
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 105.39445721563933883337;
     } else if (mon_id == "li") {
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 3.24887148714749872914;
     } else if (mon_id == "na") {
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 16.02787872333703428437;
     } else if (mon_id == "k") {
-    // FIXME This value will be set from C6 K-O and K-H. Qchem does not allow
-    // C6 calculations for only pseudopotential atoms, i.e. 2 bromide, iodide...)
-    // It will be calculated as:
-    // (C6(K--O)/C6_lr(O) + C6(K--H)/C6_lr(H)) / 2 
+        // FIXME This value will be set from C6 K-O and K-H. Qchem does not allow
+        // C6 calculations for only pseudopotential atoms, i.e. 2 bromide, iodide...)
+        // It will be calculated as:
+        // (C6(K--O)/C6_lr(O) + C6(K--H)/C6_lr(H)) / 2
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 37.63136349992751547203;
     } else if (mon_id == "rb") {
-    // FIXME This value will be set from C6 Rb-O and Rb-H. Qchem does not allow
-    // C6 calculations for only pseudopotential atoms, i.e. 2 bromide, iodide...)
-    // It will be calculated as:
-    // (C6(Rb--O)/C6_lr(O) + C6(Rb--H)/C6_lr(H)) / 2 
+        // FIXME This value will be set from C6 Rb-O and Rb-H. Qchem does not allow
+        // C6 calculations for only pseudopotential atoms, i.e. 2 bromide, iodide...)
+        // It will be calculated as:
+        // (C6(Rb--O)/C6_lr(O) + C6(Rb--H)/C6_lr(H)) / 2
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 49.17633137941422098718;
     } else if (mon_id == "cs") {
-    // FIXME This value will be set from C6 Cs-O and Cs-H. Qchem does not allow
-    // C6 calculations for only pseudopotential atoms, i.e. 2 bromide, iodide...)
-    // It will be calculated as:
-    // (C6(Cs--O)/C6_lr(O) + C6(Cs--H)/C6_lr(H)) / 2 
+        // FIXME This value will be set from C6 Cs-O and Cs-H. Qchem does not allow
+        // C6 calculations for only pseudopotential atoms, i.e. 2 bromide, iodide...)
+        // It will be calculated as:
+        // (C6(Cs--O)/C6_lr(O) + C6(Cs--H)/C6_lr(H)) / 2
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 65.76255818916154320248;
         // BEGIN SECTION C6_LONG_RANGE
         // ==> PASTE YOUR CODE BELOW <==
@@ -1054,20 +1060,19 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
             c6_lr[nv * natoms + fst_ind + 1] = 13.04205731316957524126;  // O
             c6_lr[nv * natoms + fst_ind + 2] = 13.04205731316957524126;  // O
         }
-    } else if (mon_id == "dummy") {
+    } else if (mon_id == "h4_dummy") {
         for (size_t nv = 0; nv < n_mon; nv++) {
-            c6_lr[fst_ind + nv] = 0.0;
-        }
-    } else if (mon_id == "ar") {
-        for (size_t nv = 0; nv < n_mon; nv++) {
-            c6_lr[fst_ind + nv] = 43.09834;
+            c6_lr[nv * natoms + fst_ind] = 0.00000;
+            c6_lr[nv * natoms + fst_ind + 1] = 0.00000;
+            c6_lr[nv * natoms + fst_ind + 2] = 0.00000;
+            c6_lr[nv * natoms + fst_ind + 3] = 0.00000;
         }
     } else if (mon_id == "nh3") {
-        for (size_t nv = 0; nv < n_mon; nv++) { 
-            c6_lr[nv * natoms + fst_ind] = 15.600760741363583; // A
-            c6_lr[nv * natoms + fst_ind] = 6.332641587660851; // B
-            c6_lr[nv * natoms + fst_ind] = 6.332641587660851; // B
-            c6_lr[nv * natoms + fst_ind] = 6.332641587660851; // B
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            c6_lr[nv * natoms + fst_ind] = 15.600760741363583;  // A
+            c6_lr[nv * natoms + fst_ind] = 6.332641587660851;   // B
+            c6_lr[nv * natoms + fst_ind] = 6.332641587660851;   // B
+            c6_lr[nv * natoms + fst_ind] = 6.332641587660851;   // B
         }
         // END SECTION C6_LONG_RANGE
         // Water is the only monomer which C6 does not come from qchem.
@@ -1098,8 +1103,8 @@ void RedistributeVirtGrads2Real(const std::string mon, const size_t nmon, const 
 }
 
 void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_t fi_crd, const size_t fi_sites,
-                           const std::vector<double> phi, std::vector<double> &grad,
-                           const std::vector<double> chg_grad, double* crd, std::vector<double> *qdvirial) {
+                           const std::vector<double> phi, std::vector<double> &grad, const std::vector<double> chg_grad,
+                           double *crd, std::vector<double> *qdvirial) {
     // If water, extracted from patridge-schwneke paper
     if (mon == "h2o") {
         for (size_t mm = 0; mm < nmon; mm++) {
@@ -1148,119 +1153,110 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
             }
 
             if (qdvirial != 0) {
-                std::vector<double> temp_pos = { crd[mm*1], crd[mm + nmon], crd[mm +2*nmon], crd[mm + 3*nmon], 
-                                       crd[mm+4*nmon], crd[mm+5*nmon], crd[mm+6*nmon], crd[mm+7*nmon], crd[mm+8*nmon]};
+                std::vector<double> temp_pos = {crd[mm * 1],        crd[mm + nmon],     crd[mm + 2 * nmon],
+                                                crd[mm + 3 * nmon], crd[mm + 4 * nmon], crd[mm + 5 * nmon],
+                                                crd[mm + 6 * nmon], crd[mm + 7 * nmon], crd[mm + 8 * nmon]};
 
                 std::vector<double> chgtmpnv_test((3));
                 std::vector<double> chgder_test((27));
 
-                std::vector<double> aux_data(6,0.0); // declare array to store auxillary output from dms_nasa_vir
+                std::vector<double> aux_data(6, 0.0);  // declare array to store auxillary output from dms_nasa_vir
 
-                ps::dms_nasa(0.0, 0.0, 0.0, temp_pos.data(), chgtmpnv_test.data(),chgder_test.data(), &aux_data); // get them aux data (charge derivateves with respect to internal coords)
-                     
+                ps::dms_nasa(0.0, 0.0, 0.0, temp_pos.data(), chgtmpnv_test.data(), chgder_test.data(),
+                             &aux_data);  // get them aux data (charge derivateves with respect to internal coords)
+
                 // get the charge derivatives in internal coordinates ( r12 = rOH1, r13=rOH2, cos = cos(theta))
                 double dp1dr12 = aux_data[0];  // pass data onto variables
                 double dp1dr13 = aux_data[1];
                 double dp2dr12 = aux_data[2];
-                double dp2dr13 = aux_data[3];	    
+                double dp2dr13 = aux_data[3];
                 double dp1dcos = aux_data[4];
                 double dp2dcos = aux_data[5];
-
 
                 std::vector<double> dqdr12(4, 0.0);
                 std::vector<double> dqdr13(4, 0.0);
                 std::vector<double> dqdcos(4, 0.0);
 
                 double gamma = gammaM;
-    
-                double tmp = gamma / 2.0 / ( 1.0 - gamma );
-                
+
+                double tmp = gamma / 2.0 / (1.0 - gamma);
+
                 // adding M-site contribution to the derivatives
-                dqdr12[1] = dp1dr12 + ( dp1dr12 + dp2dr12 ) * tmp;   //h1 
-                dqdr13[1] = dp1dr13 + ( dp1dr13 + dp2dr13 ) * tmp;
-                dqdcos[1] = dp1dcos + ( dp1dcos + dp2dcos ) * tmp;
-    
-                dqdr12[2] = dp2dr12 + ( dp1dr12 + dp2dr12 ) * tmp;  //h2
-                dqdr13[2] = dp2dr13 + ( dp1dr13 + dp2dr13 ) * tmp;
-                dqdcos[2] = dp2dcos + ( dp1dcos + dp2dcos ) * tmp;
-    
-                dqdr12[3] = -( dp1dr12 + dp2dr12 ) / ( 1.0 - gamma ); //M
-                dqdr13[3] = -( dp1dr13 + dp2dr13 ) / ( 1.0 - gamma );
-                dqdcos[3] = -( dp1dcos + dp2dcos ) / ( 1.0 - gamma );
+                dqdr12[1] = dp1dr12 + (dp1dr12 + dp2dr12) * tmp;  // h1
+                dqdr13[1] = dp1dr13 + (dp1dr13 + dp2dr13) * tmp;
+                dqdcos[1] = dp1dcos + (dp1dcos + dp2dcos) * tmp;
 
+                dqdr12[2] = dp2dr12 + (dp1dr12 + dp2dr12) * tmp;  // h2
+                dqdr13[2] = dp2dr13 + (dp1dr13 + dp2dr13) * tmp;
+                dqdcos[2] = dp2dcos + (dp1dcos + dp2dcos) * tmp;
 
-                for (int ii =0; ii < 4; ii++) {   // loop over all sites
- 
+                dqdr12[3] = -(dp1dr12 + dp2dr12) / (1.0 - gamma);  // M
+                dqdr13[3] = -(dp1dr13 + dp2dr13) / (1.0 - gamma);
+                dqdcos[3] = -(dp1dcos + dp2dcos) / (1.0 - gamma);
+
+                for (int ii = 0; ii < 4; ii++) {  // loop over all sites
+
                     // get the electrostatic potential on that site
                     double vtmp;
 
-                    if ( ii == 1 ){
-                        vtmp = phi[sphi + 1]; //h1
+                    if (ii == 1) {
+                        vtmp = phi[sphi + 1];  // h1
                     }
 
-                    if ( ii == 2 ){
-                        vtmp = phi[sphi + 2];  //h2
+                    if (ii == 2) {
+                        vtmp = phi[sphi + 2];  // h2
                     }
 
-                    if ( ii == 3 ){
-                        vtmp = phi[sphi + 3]; //M
+                    if (ii == 3) {
+                        vtmp = phi[sphi + 3];  // M
                     }
 
+                    for (int l = 0; l < 3; l++) {  // double loop for charge derivatives with respect to each internal
+                                                   // bond coordinate (ie r12 and r13) for each atom.
 
-
-                    for (int l = 0; l < 3; l++){ // double loop for charge derivatives with respect to each internal bond coordinate (ie r12 and r13) for each atom.
-
-                        for (int m=l+1;m<4;m++) {    
-            
+                        for (int m = l + 1; m < 4; m++) {
                             double rx;
                             double ry;
                             double rz;
                             double dqdr_tmp;
                             double prefac;
-            
+
                             // get the distances and charge derivatives with respect to r12 and r13 (the OH bonds)
-                            if ( (l == 0) && (m == 1) ) {
-            
+                            if ((l == 0) && (m == 1)) {
                                 dqdr_tmp = dqdr12[ii];
-            
+
                                 rx = temp_pos[0] - temp_pos[3];
                                 ry = temp_pos[1] - temp_pos[4];
                                 rz = temp_pos[2] - temp_pos[5];
                                 prefac = 1.0;
 
-                            } else if ( (l == 0) && (m == 2) ) {
-            
+                            } else if ((l == 0) && (m == 2)) {
                                 dqdr_tmp = dqdr13[ii];
-            
+
                                 rx = temp_pos[0] - temp_pos[6];
                                 ry = temp_pos[1] - temp_pos[7];
                                 rz = temp_pos[2] - temp_pos[8];
                                 prefac = 1.0;
-            
+
                             } else {
-
                                 prefac = 0.0;
-
                             }
 
-  
-                            double rjk = std::sqrt( rx * rx + ry * ry + rz * rz );
+                            double rjk = std::sqrt(rx * rx + ry * ry + rz * rz);
 
+                            // add to virial
 
-			    // add to virial
-            
-                            (*qdvirial)[0] -=  vtmp * dqdr_tmp * rx * rx / rjk*prefac*constants::COULOMB;
-                            (*qdvirial)[1] -=  vtmp * dqdr_tmp * rx * ry / rjk*prefac*constants::COULOMB;
-                            (*qdvirial)[2] -=  vtmp * dqdr_tmp * rx * rz / rjk*prefac*constants::COULOMB;
-            
-                            (*qdvirial)[4] -=  vtmp * dqdr_tmp * ry * ry / rjk*prefac*constants::COULOMB;
-                            (*qdvirial)[5] -=  vtmp * dqdr_tmp * ry * rz / rjk*prefac*constants::COULOMB;
-            
-                            (*qdvirial)[8] -=  vtmp * dqdr_tmp * rz * rz / rjk*prefac*constants::COULOMB;
+                            (*qdvirial)[0] -= vtmp * dqdr_tmp * rx * rx / rjk * prefac * constants::COULOMB;
+                            (*qdvirial)[1] -= vtmp * dqdr_tmp * rx * ry / rjk * prefac * constants::COULOMB;
+                            (*qdvirial)[2] -= vtmp * dqdr_tmp * rx * rz / rjk * prefac * constants::COULOMB;
 
+                            (*qdvirial)[4] -= vtmp * dqdr_tmp * ry * ry / rjk * prefac * constants::COULOMB;
+                            (*qdvirial)[5] -= vtmp * dqdr_tmp * ry * rz / rjk * prefac * constants::COULOMB;
 
-                        } // m
-                    } // l
+                            (*qdvirial)[8] -= vtmp * dqdr_tmp * rz * rz / rjk * prefac * constants::COULOMB;
+
+                        }  // m
+                    }      // l
 
                     // angular terms
                     double rx1 = temp_pos[0] - temp_pos[3];
@@ -1275,57 +1271,42 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
                     double ry3 = temp_pos[4] - temp_pos[7];
                     double rz3 = temp_pos[5] - temp_pos[8];
 
+                    double r1 = std::sqrt(rx1 * rx1 + ry1 * ry1 + rz1 * rz1);
+                    double r2 = std::sqrt(rx2 * rx2 + ry2 * ry2 + rz2 * rz2);
+                    double r3 = std::sqrt(rx3 * rx3 + ry3 * ry3 + rz3 * rz3);
 
-                    double r1 = std::sqrt( rx1 * rx1 + ry1 * ry1 + rz1 * rz1 );
-                    double r2 = std::sqrt( rx2 * rx2 + ry2 * ry2 + rz2 * rz2 );
-                    double r3 = std::sqrt( rx3 * rx3 + ry3 * ry3 + rz3 * rz3 );
-                     
                     double rdot = rx1 * rx2 + ry1 * ry2 + rz1 * rz2;
-                    double cost = rdot / ( r1 * r2 );
-                    
-                    double dcosdr12 = ( r1 - r2 * cost ) / r1 / r2;
-                    double dcosdr13 = ( r2 - r1 * cost ) / r1 / r2;
+                    double cost = rdot / (r1 * r2);
+
+                    double dcosdr12 = (r1 - r2 * cost) / r1 / r2;
+                    double dcosdr13 = (r2 - r1 * cost) / r1 / r2;
                     double dcosdr23 = -r3 / r1 / r2;
 
                     // chain rule the cosine to bond coords
-                    double dcostmp1 = dcosdr12 * rx1 * rx1 / r1 
-                            + dcosdr13 * rx2 * rx2 / r2 
-                            + dcosdr23 * rx3 * rx3 / r3;
-                    double dcostmp2 = dcosdr12 * rx1 * ry1 / r1 
-                            + dcosdr13 * rx2 * ry2 / r2 
-                            + dcosdr23 * rx3 * ry3 / r3;
-                    double dcostmp3 = dcosdr12 * rx1 * rz1 / r1 
-                            + dcosdr13 * rx2 * rz2 / r2 
-                            + dcosdr23 * rx3 * rz3 / r3;
-    
-                    double dcostmp5 = dcosdr12 * ry1 * ry1 / r1 
-                            + dcosdr13 * ry2 * ry2 / r2 
-                            + dcosdr23 * ry3 * ry3 / r3;
-                    double dcostmp6 = dcosdr12 * ry1 * rz1 / r1 
-                            + dcosdr13 * ry2 * rz2 / r2 
-                            + dcosdr23 * ry3 * rz3 / r3;
-    
-                    double dcostmp9 = dcosdr12 * rz1 * rz1 / r1 
-                            + dcosdr13 * rz2 * rz2 / r2 
-                            + dcosdr23 * rz3 * rz3 / r3;
+                    double dcostmp1 = dcosdr12 * rx1 * rx1 / r1 + dcosdr13 * rx2 * rx2 / r2 + dcosdr23 * rx3 * rx3 / r3;
+                    double dcostmp2 = dcosdr12 * rx1 * ry1 / r1 + dcosdr13 * rx2 * ry2 / r2 + dcosdr23 * rx3 * ry3 / r3;
+                    double dcostmp3 = dcosdr12 * rx1 * rz1 / r1 + dcosdr13 * rx2 * rz2 / r2 + dcosdr23 * rx3 * rz3 / r3;
+
+                    double dcostmp5 = dcosdr12 * ry1 * ry1 / r1 + dcosdr13 * ry2 * ry2 / r2 + dcosdr23 * ry3 * ry3 / r3;
+                    double dcostmp6 = dcosdr12 * ry1 * rz1 / r1 + dcosdr13 * ry2 * rz2 / r2 + dcosdr23 * ry3 * rz3 / r3;
+
+                    double dcostmp9 = dcosdr12 * rz1 * rz1 / r1 + dcosdr13 * rz2 * rz2 / r2 + dcosdr23 * rz3 * rz3 / r3;
 
                     // add to virial
-                    (*qdvirial)[0] -= dqdcos[ii] * dcostmp1*vtmp*constants::COULOMB;
-                    (*qdvirial)[1] -= dqdcos[ii] * dcostmp2*vtmp*constants::COULOMB;
-                    (*qdvirial)[2] -= dqdcos[ii] * dcostmp3*vtmp*constants::COULOMB;
-                    (*qdvirial)[4] -= dqdcos[ii] * dcostmp5*vtmp*constants::COULOMB;
-                    (*qdvirial)[5] -= dqdcos[ii] * dcostmp6*vtmp*constants::COULOMB;
-                    (*qdvirial)[8] -= dqdcos[ii] * dcostmp9*vtmp*constants::COULOMB;
+                    (*qdvirial)[0] -= dqdcos[ii] * dcostmp1 * vtmp * constants::COULOMB;
+                    (*qdvirial)[1] -= dqdcos[ii] * dcostmp2 * vtmp * constants::COULOMB;
+                    (*qdvirial)[2] -= dqdcos[ii] * dcostmp3 * vtmp * constants::COULOMB;
+                    (*qdvirial)[4] -= dqdcos[ii] * dcostmp5 * vtmp * constants::COULOMB;
+                    (*qdvirial)[5] -= dqdcos[ii] * dcostmp6 * vtmp * constants::COULOMB;
+                    (*qdvirial)[8] -= dqdcos[ii] * dcostmp9 * vtmp * constants::COULOMB;
 
                     (*qdvirial)[3] = (*qdvirial)[1];
                     (*qdvirial)[6] = (*qdvirial)[2];
                     (*qdvirial)[7] = (*qdvirial)[5];
 
-                } // ii
+                }  // ii
 
-
-            } // end virial
-
+            }  // end virial
         }
     }
 }

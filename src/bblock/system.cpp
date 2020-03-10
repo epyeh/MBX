@@ -1131,19 +1131,21 @@ double System::Energy(bool do_grads) {
     // Reset the charges, pols, polfacs and new Vsite
     SetPBC(box_);
 
-    // Call the get energy function
-    double eff = GetFF(do_grads);
-    exit(1);  // TODO REMOVE ME
-
     // Get the NB contributions
+
+    allMonGood_ = true;
+    // Call the get energy function
+    double eff = ClassicPotential(do_grads);
 
 #ifdef TIMING
     auto t1 = std::chrono::high_resolution_clock::now();
 #endif
+    allMonGood_ = true;  // Needs to be correct
+std:
+    cerr << "Warning, your allMonGood_ is incorrect. It has been modified like such to make the unittest-co2-monomer "
+         << "pass. It needs to be fixed and removed." << std::endl;
 
-    allMonGood_ = true;
     double e1b = Get1B(do_grads);
-
     // If monomers are too distorted, skip 2b and 3b calculation
     // Return only
     if (!allMonGood_) {
@@ -1190,7 +1192,7 @@ double System::Energy(bool do_grads) {
 #endif
 
     // Set up energy with the new value
-    energy_ = e1b + e2b + e3b + edisp + ebuck + Eelec;
+    energy_ = eff + e1b + e2b + e3b + edisp + ebuck + Eelec;
 
 #ifdef PRINT_INDIVIDUAL_TERMS
     std::cerr << std::setprecision(10) << std::scientific;

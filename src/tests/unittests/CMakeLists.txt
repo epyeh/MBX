@@ -47,6 +47,7 @@
 
 set( SOURCES_UNITTESTS_TESTS
     unittest-h4.cpp
+    unittest-co2-monomer.cpp
 )
 # Stuff below shouldn't need to be modified
 #

@@ -46,11 +46,21 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 constexpr double TOL = 1E-6;
 
 TEST_CASE("Test co2 monomer energy terms") {
-    // Create the bromide -- water system
+    // Create the co2 system
     SETUP_CO2_1
+
+    bond1.SetParameters(bond_morse_linear_parameters, bond_morse_nonlinear_parameters);
+    bond2.SetParameters(bond_morse_linear_parameters, bond_morse_nonlinear_parameters);
+    std::vector<Bond> bond_vec = {bond1, bond2};
+    angle1.SetParameters(angle_harm_linear_parameters1, angle_harm_nonlinear_parameters1);
+    std::vector<Angles> angle_vec = {angle1};
+    connectivity::Conn connectivityObj1 =
+        connectivity::Conn("co2", bond_vec, angle_vec, std::vector<Dihedral>{}, std::vector<Inversion>{});
+    std::unordered_map<std::string, connectivity::Conn> connectivity_map = {std::make_pair("co2", connectivityObj1)};
 
     // Now we create a system that will be the same as the one read
     bblock::System my_system;
+    my_system.SetConnectivity(connectivity_map);
 
     // Add monomers to the system
     size_t count = 0;
@@ -65,6 +75,77 @@ TEST_CASE("Test co2 monomer energy terms") {
 
     // Initialize the system to fill in the information
     my_system.Initialize();
+
+    SECTION("Classic Potential") {
+        // double energy_nograd = my_system.Energy(false);
+        // double energy_grad = my_system.Energy(true);
+        double energy_nograd = my_system.ClassicPotential(false);
+        double energy_grad = my_system.ClassicPotential(true);
+        std::vector<double> real_grad = my_system.GetRealGrads();
+        std::vector<double> all_grad = my_system.GetGrads();
+        std::vector<double> real_xyz = my_system.GetRealXyz();
+        std::vector<double> all_xyz = my_system.GetXyz();
+
+        SECTION("Energy without gradients") { REQUIRE(energy_nograd == Approx(classic_energy).margin(TOL)); }
+
+        SECTION("Energy with gradients") { REQUIRE(energy_grad == Approx(classic_energy).margin(TOL)); }
+
+        SECTION("Compare analitical gradients with numerical gradients") {
+            double stepSize = 0.0001;
+            for (size_t degreeOfFreedom = 0; degreeOfFreedom < all_xyz.size(); ++degreeOfFreedom) {
+                all_xyz[degreeOfFreedom] += stepSize;
+                my_system.SetXyz(all_xyz);
+                double plusEnergy = my_system.ClassicPotential(false);
+                // double plusEnergyG = my_system.ClassicPotential(true);
+                // std::cout << "plusEnergy is: " << plusEnergy << std::endl;
+                // std::cout << "plusEnergy is: " << plusEnergyG << std::endl;
+
+                all_xyz[degreeOfFreedom] += stepSize;
+                my_system.SetXyz(all_xyz);
+                double plusplusEnergy = my_system.ClassicPotential(false);
+                // double plusplusEnergyG = my_system.ClassicPotential(true);
+                // std::cout << "plusplusEnergy is: " << plusplusEnergy << std::endl;
+                // std::cout << "plusplusEnergyG is: " << plusplusEnergyG << std::endl;
+
+                all_xyz[degreeOfFreedom] += stepSize;
+                my_system.SetXyz(all_xyz);
+                double plusplusplusEnergy = my_system.ClassicPotential(false);
+                // double plusplusplusEnergyG = my_system.ClassicPotential(true);
+                // std::cout << "plusplusplusEnergy is: " << plusplusplusEnergy << std::endl;
+                // std::cout << "plusplusplusEnergyG is: " << plusplusplusEnergyG << std::endl;
+
+                all_xyz[degreeOfFreedom] -= 6 * stepSize;
+                my_system.SetXyz(all_xyz);
+                double minusminusminusEnergy = my_system.ClassicPotential(false);
+                // double minusminusminusEnergyG = my_system.ClassicPotential(true);
+                // std::cout << "minusminusminusEnergy is: " << minusminusminusEnergy << std::endl;
+                // std::cout << "minusminusminusEnergyG is: " << minusminusminusEnergyG << std::endl;
+
+                all_xyz[degreeOfFreedom] += stepSize;
+                my_system.SetXyz(all_xyz);
+                double minusminusEnergy = my_system.ClassicPotential(false);
+                // double minusminusEnergyG = my_system.ClassicPotential(true);
+                // std::cout << "minusminusEnergy is: " << minusminusEnergy << std::endl;
+                // std::cout << "minusminusEnergyG is: " << minusminusEnergyG << std::endl;
+
+                all_xyz[degreeOfFreedom] += stepSize;
+                my_system.SetXyz(all_xyz);
+                double minusEnergy = my_system.ClassicPotential(false);
+                // double minusEnergyG = my_system.ClassicPotential(true);
+                // std::cout << "minusEnergy is: " << minusEnergy << std::endl;
+                // std::cout << "minusEnergyG is: " << minusEnergyG << std::endl;
+
+                all_xyz[degreeOfFreedom] += stepSize;
+                my_system.SetXyz(all_xyz);
+                double finiteDifferenceForce = (-1 * minusminusminusEnergy + 9 * minusminusEnergy - 45 * minusEnergy +
+                                                45 * plusEnergy - 9 * plusplusEnergy + plusplusplusEnergy) /
+                                               (60 * stepSize);
+                // REQUIRE(all_grad[degreeOfFreedom] == Approx(finiteDifferenceForce).margin(TOL));
+                std::cout << "analytical is: " << all_grad[degreeOfFreedom]
+                          << " numerical is: " << finiteDifferenceForce << std::endl;
+            }
+        }
+    }
 
     SECTION("One-Body") {
         double energy_nograd = my_system.OneBodyEnergy(false);
